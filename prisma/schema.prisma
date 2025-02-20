@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * Lệnh npx prisma migrate dev --name init sẽ:
+ * Tạo một migration mới với tên là init.
+ * Áp dụng migration đó vào cơ sở dữ liệu của bạn.
+ * Đảm bảo rằng schema của cơ sở dữ liệu được đồng bộ với schema được định nghĩa trong file schema.prisma.
+ */
+
+model Product {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  /**
+   * - `id String`: Prisma mặc định UUID là kiểu chuỗi (`String`), nhưng với `@db.Uuid()`, nó sẽ lưu dưới dạng UUID thực trong PostgreSQL.
+   * - `@id`: Xác định đây là **khóa chính (Primary Key)** của bảng.
+   * - `@default(dbgenerated("gen_random_uuid()"))`: PostgreSQL **tự động sinh UUID ngẫu nhiên** khi tạo bản ghi mới, Prisma **không cần tạo UUID trong Client**.
+   * - `@db.Uuid()`: Prisma ánh xạ `id` thành **kiểu dữ liệu UUID gốc của PostgreSQL** thay vì `VARCHAR(36)` hoặc `TEXT`, giúp **tối ưu bộ nhớ & tốc độ truy vấn**.
+   */
+  name        String
+  slug        String   @unique(map: "product_slug_idx")
+  /**
+   * - `slug String @unique`: _slug_unique (Tên ngẫu nhiên do Prisma tạo)
+   * - `slug String @unique(map: "product_slug_idx")`: "product_slug_idx" (Tự đặt tên)
+   */
+  category    String
+  images      String[]
+  brand       String
+  description String
+  stock       Int
+  price       Decimal  @default(0) @db.Decimal(12, 2) // Giá sản phẩm, tối đa 12 chữ số, 2 số thập phân
+  rating      Decimal  @default(0) @db.Decimal(3, 2)
+  numReviews  Int      @default(0)
+  isFeatured  Boolean
+  banner      String? // <--- Dấu '?' nghĩa là giá trị có thể NULL
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  /**
+   * @db.Timestamp(6): Xác định kiểu dữ liệu của createdAt trong PostgreSQL là TIMESTAMP(6), với 6 chữ số thập phân cho phần microsecond.
+   * @default(now()): Giá trị mặc định của createdAt sẽ là thời gian hiện tại (CURRENT_TIMESTAMP).
+   * Chính xác đến microsecond (6 chữ số sau dấu thập phân) → YYYY-MM-DD HH:MI:SS.ffffff.
+   */
+}
