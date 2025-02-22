@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
@@ -15,6 +15,7 @@ datasource db {
  * Đảm bảo rằng schema của cơ sở dữ liệu được đồng bộ với schema được định nghĩa trong file schema.prisma.
  */
 
+//Product based table
 model Product {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
   /**
@@ -45,4 +46,60 @@ model Product {
    * @default(now()): Giá trị mặc định của createdAt sẽ là thời gian hiện tại (CURRENT_TIMESTAMP).
    * Chính xác đến microsecond (6 chữ số sau dấu thập phân) → YYYY-MM-DD HH:MI:SS.ffffff.
    */
+}
+
+//User based tables
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  name          String    @default("NO_NAME")
+  email         String    @unique(map: "user_email_idx")
+  emailVerified DateTime? @db.Timestamp(6)
+  image         String?
+  password      String?
+  role          String    @default("user")
+  address       Json?     @db.Json
+  paymentMethod String?
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+  account       Account[]
+  session       Session[]
+}
+
+model Account {
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamp(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
 }
