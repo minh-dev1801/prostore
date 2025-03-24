@@ -1,5 +1,5 @@
 import ProductCart from "./product-cart";
-import {Product} from "@/types"
+import { Product } from "@/types";
 
 const ProductList = ({
   data,
